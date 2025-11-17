@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - TMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .approval-list {
+            list-style: none;
+            padding: 0;
+        }
+        .approval-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .approval-item .details p {
+            margin: 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .approval-item .details p strong {
+            color: #333;
+        }
+        .approval-item .btn {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-bar">
+        <div class="logo-container">
+            <img src="/images/logo.jpg" alt="Logo" class="header-logo">
+            <div class="logo-text">Transport Management System</div>
+        </div>
+        <a href="/" class="btn">Logout</a>
+    </nav>
+    <div class="home-container">
+        <div class="home-box">
+            <div class="profile-card">
+                <div class="profile-icon">&#128100;</div>
+                <div id="staff-name" class="student-name"></div>
+                <div id="staff-designation" class="roll-number"></div>
+                <div id="staff-id" class="roll-number"></div>
+            </div>
+        </div>
+        <div class="home-box">
+            <h3>Pending Approvals</h3>
+            <div id="pending-approvals-container">
+                <!-- Pending approvals will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const name = urlParams.get('name');
+        const designation = urlParams.get('designation');
+
+        // Populate staff details
+        if (id && name) {
+            document.getElementById('staff-name').textContent = decodeURIComponent(name);
+            document.getElementById('staff-designation').textContent = decodeURIComponent(designation);
+            document.getElementById('staff-id').textContent = `ID: ${decodeURIComponent(id)}`;
+        }
+
+        // Fetch and render pending approvals
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/approvals/pending')
+                .then(response => response.json())
+                .then(approvals => {
+                    const container = document.getElementById('pending-approvals-container');
+                    if (approvals.length === 0) {
+                        container.innerHTML = '<p>No pending approvals.</p>';
+                        return;
+                    }
+
+                    const list = document.createElement('ul');
+                    list.className = 'approval-list';
+                    approvals.forEach(approval => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'approval-item';
+                        listItem.id = `approval-${approval.Approval_id}`;
+                        listItem.innerHTML = `
+                            <div class="details">
+                                <p><strong>Student:</strong> ${approval.student_name} (${approval.Roll_no})</p>
+                                <p><strong>Route:</strong> ${approval.Route_no} - ${approval.Route_name}</p>
+                                <p><strong>Date:</strong> ${new Date(approval.Date).toLocaleDateString()}</p>
+                            </div>
+                            <button class="btn" onclick="approveRequest(${approval.Approval_id})">Approve</button>
+                        `;
+                        list.appendChild(listItem);
+                    });
+                    container.appendChild(list);
+                })
+                .catch(error => {
+                    console.error('Error fetching pending approvals:', error);
+                    document.getElementById('pending-approvals-container').innerHTML = '<p>Error loading approvals.</p>';
+                });
+        });
+
+        function approveRequest(approvalId) {
+            const staffId = id; // Get staffId from URL params
+            fetch('/api/approvals/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ approvalId, staffId })
+            })
+            .then(async response => {
+                if (response.ok) {
+                    alert('Request approved successfully!');
+                    // Remove the approved item from the list
+                    const itemToRemove = document.getElementById(`approval-${approvalId}`);
+                    if (itemToRemove) {
+                        itemToRemove.remove();
+                    }
+                    // Check if the list is now empty
+                    const container = document.getElementById('pending-approvals-container');
+                    if (!container.querySelector('.approval-item')) {
+                        container.innerHTML = '<p>No pending approvals.</p>';
+                    }
+                } else {
+                    const errorText = await response.text();
+                    alert(`Failed to approve: ${errorText}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error approving request:', error);
+                alert('An error occurred while approving the request.');
+            });
+        }
+    </script>
+</body>
+</html>

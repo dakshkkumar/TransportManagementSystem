@@ -1,0 +1,366 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@400;500;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-logo-container {
+    text-align: center;
+    margin-bottom: 40px; /* Increased margin to move it up slightly */
+}
+
+.login-logo {
+    max-width: 180px; /* Slightly larger logo for prominence */
+    height: auto;
+}
+
+.login-box {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.home-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch; /* Make items stretch to fill the height */
+    padding: 40px;
+    gap: 20px;
+}
+
+.home-box {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    flex-grow: 1; /* Allow boxes to grow and fill available space */
+    flex-basis: 0; /* Important for flex-grow to work correctly */
+    text-align: left;
+}
+
+.route-details h3, #shuttle-container h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.route-details p, #shuttle-details p {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .top-bar {
+        padding: 20px;
+    }
+
+    .home-box {
+        width: 90%;
+    }
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 15px;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn:hover {
+    background-color: #f0f0f0;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    color: #ccc;
+}
+
+.student-name {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.roll-number {
+    font-size: 18px;
+    color: #777;
+}
+
+.user-list-container {
+    margin: 20px 40px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.user-list-container h3 {
+    font-size: 20px;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.user-list-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.user-list-container li {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.user-list-container li:last-child {
+    border-bottom: none;
+}
+
+.spoc-tag {
+    background-color: #ffc107;
+    color: #333;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 10px;
+}
+
+.btn-details {
+    background-color: #6c757d;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    margin-left: 10px;
+}
+
+.btn-details:hover {
+    background-color: #5a6268;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.login-logo-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-logo {
+    max-width: 150px;
+    height: auto;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+    margin-right: 15px;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.logo {
+    height: 40px;
+    width: auto;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+}
+
+.shuttle-options {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.shuttle-options .btn {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+}
+
+.shuttle-options .btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+/* Center QR Code and align modal content */
+#booking-review-modal .modal-content, #approval-ticket-modal .modal-content {
+    text-align: center;
+}
+
+#qr-code-img, #approval-qr-code-img {
+    display: block;
+    margin: 20px auto;
+}
+
+
+/* --- Hosteler Route Access UI --- */
+#hosteler-route-access-container {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+}
+
+#hosteler-route-access-container h3 {
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+#hosteler-route-access-container p {
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+#route-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+    font-size: 16px;
+    margin-bottom: 20px;
+    -webkit-appearance: none; /* Remove default appearance */
+    -moz-appearance: none;
+    appearance: none;
+    /* Add custom dropdown arrow */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 15px top 50%;
+    background-size: .65em auto;
+}
+
+#request-approval-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+}

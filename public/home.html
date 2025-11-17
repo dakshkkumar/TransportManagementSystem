@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - TMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="top-bar">
+        <div class="logo-container">
+            <img src="/images/logo.jpg" alt="Logo" class="header-logo">
+            <div class="logo-text">Transport Management System</div>
+        </div>
+        <a href="/" class="btn">Logout</a>
+    </nav>
+    <div class="home-container">
+        <div class="home-box">
+            <div class="profile-card">
+                <div class="profile-icon">&#128100;</div>
+                <div id="student-name" class="student-name"></div>
+                <div id="roll-number" class="roll-number"></div>
+            </div>
+            <div class="route-details">
+                <h3>Route Details</h3>
+                <p><strong>Route No:</strong> <span id="route-no"></span></p>
+                <p><strong>Driver Name:</strong> <span id="driver-name"></span> <button id="driver-details-btn" class="btn-details">Details</button></p>
+                <p><strong>Bus No:</strong> <span id="bus-no"></span></p>
+                <button id="show-users-btn" class="btn">All users in your bus</button>
+            </div>
+            <div id="hosteler-route-access-container">
+                <!-- Hosteler UI for route access will be injected here -->
+            </div>
+        </div>
+        <div id="shuttle-container" class="home-box">
+            <h3>Upcoming Shuttle</h3>
+            <div class="shuttle-options">
+                <button id="afternoon-shuttle-btn" class="btn active">Afternoon Shuttle</button>
+                <button id="evening-shuttle-btn" class="btn">Evening Shuttle</button>
+            </div>
+            <div id="shuttle-details">
+                <!-- Shuttle details will be populated here by JavaScript -->
+            </div>
+        </div>
+    </div>
+    <div id="user-list-container" class="user-list-container" style="display: none;"></div>
+
+    <!-- The Driver Details Modal -->
+    <div id="driver-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3 id="modal-driver-name"></h3>
+            <p><strong>Mobile:</strong> <span id="modal-driver-mobile"></span></p>
+            <p><strong>License ID:</strong> <span id="modal-driver-license"></span></p>
+            <p><strong>Attribute:</strong> <span id="modal-driver-attribute"></span></p>
+        </div>
+    </div>
+
+    <!-- The Booking Review Modal -->
+    <div id="booking-review-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>Your Shuttle Booking</h3>
+            <div id="booking-details-content"></div>
+            <img id="qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=placeholder" alt="QR Code">
+            <button id="cancel-booking-btn" class="btn btn-danger">Cancel Ticket</button>
+        </div>
+    </div>
+
+    <!-- The Approval Ticket Modal -->
+    <div id="approval-ticket-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>Your Approved Route Ticket</h3>
+            <div id="approval-details-content"></div>
+            <img id="approval-qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=placeholder" alt="QR Code">
+        </div>
+    </div>
+
+    <script>
+        // --- URL PARAMS AND USER DATA ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name');
+        const rollNo = urlParams.get('rollNo');
+        const routeNo = urlParams.get('routeNo');
+        const driverName = urlParams.get('driverName');
+        const driverId = urlParams.get('driverId');
+        const busNo = urlParams.get('busNo');
+        const isHosteler = !routeNo || routeNo === 'null';
+
+        // --- PAGE INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate user profile card
+            if (name) {
+                document.getElementById('student-name').textContent = decodeURIComponent(name);
+                document.getElementById('roll-number').textContent = decodeURIComponent(rollNo);
+            }
+
+            if (isHosteler) {
+                // User is a hosteler, hide route details and init approval UI
+                document.querySelector('.route-details').style.display = 'none';
+                initializeHostelerUI();
+            } else {
+                // User is a day scholar, show route details
+                document.getElementById('route-no').textContent = decodeURIComponent(routeNo);
+                document.getElementById('driver-name').textContent = decodeURIComponent(driverName);
+                document.getElementById('bus-no').textContent = decodeURIComponent(busNo);
+                document.getElementById('driver-details-btn').addEventListener('click', () => openDriverModal(driverId));
+                document.getElementById('show-users-btn').addEventListener('click', () => fetchUsersOnRoute(routeNo));
+            }
+
+            // Initialize shuttle booking UI for everyone
+            initializeShuttleUI();
+            setupModalCloseButtons();
+        });
+
+        // --- HOSTELER ROUTE APPROVAL ---
+        function initializeHostelerUI() {
+            fetch(`/api/approval/status/${rollNo}`)
+                .then(res => res.json())
+                .then(approvalStatus => {
+                    if (!approvalStatus) {
+                        renderRouteRequestUI();
+                    } else if (approvalStatus.status === 'pending') {
+                        renderPendingUI(approvalStatus);
+                    } else if (approvalStatus.status === 'approved') {
+                        renderApprovedUI(approvalStatus);
+                    }
+                })
+                .catch(err => console.error('Error fetching approval status:', err));
+        }
+
+        function renderRouteRequestUI() {
+            const container = document.getElementById('hosteler-route-access-container');
+            container.innerHTML = `<h3>Access a Route</h3>`;
+            fetch('/api/routes')
+                .then(res => res.json())
+                .then(routes => {
+                    let options = routes.map(r => `<option value="${r.Route_no}">${r.Route_no}: ${r.Route_name}</option>`).join('');
+                    container.innerHTML += `
+                        <select id="route-select">
+                            <option value="">-- Select a Route --</option>
+                            ${options}
+                        </select>
+                        <button id="request-approval-btn" class="btn">Request Approval</button>
+                    `;
+                    document.getElementById('request-approval-btn').addEventListener('click', () => {
+                        const selectedRoute = document.getElementById('route-select').value;
+                        if (selectedRoute) {
+                            requestApproval(selectedRoute);
+                        } else {
+                            alert('Please select a route.');
+                        }
+                    });
+                });
+        }
+
+        function renderPendingUI(status) {
+            const container = document.getElementById('hosteler-route-access-container');
+            container.innerHTML = `
+                <h3>Approval Pending</h3>
+                <p>Your request to access <strong>Route ${status.Route_no} (${status.Route_name})</strong> is pending approval.</p>
+            `;
+        }
+
+        function renderApprovedUI(status) {
+            const container = document.getElementById('hosteler-route-access-container');
+            container.innerHTML = `
+                <h3>Route Access Approved</h3>
+                <p><strong>Route:</strong> ${status.Route_no} - ${status.Route_name}</p>
+                <p><strong>Bus No:</strong> ${status.Bus_id}</p>
+                <p><strong>Driver:</strong> ${status.driver_name} <button class="btn-details" onclick="openDriverModal(${status.Driver_id})">Details</button></p>
+                <button class="btn" onclick='viewApprovalTicket(${JSON.stringify(status)})'>View Ticket</button>
+            `;
+        }
+
+        function requestApproval(routeNo) {
+            fetch('/api/approval/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rollNo, routeNo })
+            })
+            .then(async res => {
+                if (res.ok) {
+                    alert('Request submitted successfully!');
+                    window.location.reload();
+                } else {
+                    const errorText = await res.text();
+                    alert(`Failed to submit request: ${errorText}`);
+                }
+            })
+            .catch(err => console.error('Error submitting request:', err));
+        }
+
+        function viewApprovalTicket(status) {
+            const modal = document.getElementById('approval-ticket-modal');
+            const detailsContent = document.getElementById('approval-details-content');
+            const qrImg = document.getElementById('approval-qr-code-img');
+
+            detailsContent.innerHTML = `
+                <p><strong>Student:</strong> ${name} (${rollNo})</p>
+                <p><strong>Route:</strong> ${status.Route_no} - ${status.Route_name}</p>
+                <p><strong>Bus No:</strong> ${status.Bus_id}</p>
+                <p><strong>Status:</strong> Approved</p>
+                <p><strong>Approved By:</strong> ${status.approved_by_name} (ID: ${status.Approved_by})</p>
+            `;
+            const qrData = `Approval,RollNo:${rollNo},Route:${status.Route_no}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+            modal.style.display = 'block';
+        }
+
+        // --- SHUTTLE BOOKING ---
+        let shuttles = [];
+        let myBookings = [];
+
+        function initializeShuttleUI() {
+            Promise.all([
+                fetch('/api/shuttle-details').then(res => res.json()),
+                fetch(`/api/my-bookings/${rollNo}`).then(res => res.json())
+            ]).then(([shuttleData, bookingData]) => {
+                shuttles = shuttleData;
+                myBookings = bookingData;
+                displayShuttleDetails('afternoon'); // Default view
+            }).catch(error => {
+                console.error('Error fetching initial data:', error);
+                document.getElementById('shuttle-details').innerHTML = '<p>Error loading shuttle data.</p>';
+            });
+        }
+
+        function displayShuttleDetails(shuttleType) {
+            const shuttle = shuttles.find(s => s.Type === shuttleType);
+            const shuttleDetailsContainer = document.getElementById('shuttle-details');
+            if (!shuttle) {
+                shuttleDetailsContainer.innerHTML = `<p>No ${shuttleType} shuttle available.</p>`;
+                return;
+            }
+            const existingBooking = myBookings.find(b => b.type === shuttle.Type);
+            const isFull = shuttle.currentBookings >= shuttle.Capacity;
+            let actionButtonHtml = '';
+            if (existingBooking) {
+                actionButtonHtml = `<div class="booked-container"><button class="btn" disabled>Already Opted In</button><button class="btn-details" onclick="reviewBooking(${existingBooking.id})">Review Booking</button></div>`;
+            } else if (isFull) {
+                actionButtonHtml = `<button class="btn" disabled>Shuttle is Full</button>`;
+            } else {
+                actionButtonHtml = `<button class="btn" onclick="optIn('${shuttle.Type}')">Opt-in</button>`;
+            }
+            const today = new Date();
+            shuttleDetailsContainer.innerHTML = `
+                <p><strong>Date:</strong> ${formatDisplayDate(today)}</p>
+                <p><strong>Departure Time:</strong> ${formatDisplayTime(shuttle.departure_time)}</p>
+                <p><strong>Bus ID:</strong> ${shuttle.Bus_id}</p>
+                <p><strong>Capacity:</strong> ${shuttle.Capacity}</p>
+                <p><strong>Driver Name:</strong> ${shuttle.driver_name} <button class="btn-details" onclick="openDriverModal(${shuttle.Driver_id})">Details</button></p>
+                <div id="action-container">${actionButtonHtml}</div>
+            `;
+        }
+
+        function optIn(type) {
+            const today = new Date().toISOString().slice(0, 10);
+            fetch('/api/shuttle/opt-in', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rollNo, type, bookingDate: today }),
+            }).then(async response => {
+                if (response.ok) {
+                    alert('Booking successful!');
+                    window.location.reload();
+                } else {
+                    alert(`Failed to book: ${await response.text()}`);
+                }
+            }).catch(error => console.error('Error opting-in:', error));
+        }
+        
+        function reviewBooking(bookingId) {
+            const booking = myBookings.find(b => b.id === bookingId);
+            if (!booking) return;
+            const reviewModal = document.getElementById('booking-review-modal');
+            const detailsContent = document.getElementById('booking-details-content');
+            const qrImg = document.getElementById('qr-code-img');
+            detailsContent.innerHTML = `
+                <p><strong>Shuttle Type:</strong> ${booking.type}</p>
+                <p><strong>Bus ID:</strong> ${booking.Bus_id}</p>
+                <p><strong>Departure:</strong> ${formatDisplayDate(booking.booking_date)} at ${formatDisplayTime(booking.shuttle_time)}</p>
+                <p><strong>Status:</strong> Booked</p>
+            `;
+            const qrData = `BookingID:${booking.id},RollNo:${rollNo},Type:${booking.type}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+            document.getElementById('cancel-booking-btn').onclick = () => cancelBooking(booking.id);
+            reviewModal.style.display = 'block';
+        }
+
+        function cancelBooking(bookingId) {
+            if (!confirm('Are you sure you want to cancel this booking?')) return;
+            fetch('/api/shuttle/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId }),
+            }).then(async response => {
+                if (response.ok) {
+                    alert('Booking cancelled successfully.');
+                    window.location.reload();
+                } else {
+                    alert(`Failed to cancel: ${await response.text()}`);
+                }
+            }).catch(error => console.error('Error cancelling booking:', error));
+        }
+
+        // --- UTILS AND GENERAL ---
+        function formatDisplayTime(timeString) {
+            if (!timeString) return '';
+            const [hours, minutes] = timeString.split(':');
+            const h = parseInt(hours, 10);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const formattedHours = h % 12 || 12; // Convert 0 to 12
+            return `${formattedHours}:${minutes} ${ampm}`;
+        }
+
+        function formatDisplayDate(dateSource) {
+            const date = new Date(dateSource);
+            // Adjust for timezone offset to prevent date from changing
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+            const day = adjustedDate.getDate();
+            const month = adjustedDate.toLocaleString('default', { month: 'short' });
+            const year = adjustedDate.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
+        function fetchUsersOnRoute(routeNo) {
+            const userListContainer = document.getElementById('user-list-container');
+            fetch(`/api/students-on-route/${routeNo}`).then(response => response.json()).then(users => {
+                userListContainer.style.display = 'block';
+                userListContainer.innerHTML = '<h3>Users in Your Bus</h3>';
+                const userList = document.createElement('ul');
+                users.forEach(user => {
+                    const listItem = document.createElement('li');
+                    const spocTag = user.is_spoc ? '<span class="spoc-tag">SPOC</span>' : '';
+                    listItem.innerHTML = `<span>${user.Name} ${spocTag}</span><span>${user.Mobile}</span>`;
+                    userList.appendChild(listItem);
+                });
+                userListContainer.appendChild(userList);
+                userListContainer.scrollIntoView({ behavior: 'smooth' });
+            }).catch(error => console.error('Error fetching users:', error));
+        }
+
+        function setupModalCloseButtons() {
+            const modals = document.querySelectorAll(".modal");
+            const closeBtns = document.querySelectorAll(".close-btn");
+            for (let btn of closeBtns) {
+                btn.onclick = () => {
+                    modals.forEach(m => m.style.display = "none");
+                }
+            }
+            window.onclick = (event) => {
+                modals.forEach(modal => {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                });
+            }
+        }
+
+        function openDriverModal(driverId) {
+            fetch(`/api/driver-details/${driverId}`).then(response => response.json()).then(driver => {
+                document.getElementById("modal-driver-name").textContent = driver.Name;
+                document.getElementById("modal-driver-mobile").textContent = driver.Mobile;
+                document.getElementById("modal-driver-license").textContent = driver.License_id;
+                document.getElementById("modal-driver-attribute").textContent = driver.Attribute;
+                document.getElementById("driver-modal").style.display = "block";
+            }).catch(error => console.error('Error fetching driver details:', error));
+        }
+        
+        // Shuttle type toggle
+        document.getElementById('afternoon-shuttle-btn').addEventListener('click', () => {
+            displayShuttleDetails('afternoon');
+            document.getElementById('afternoon-shuttle-btn').classList.add('active');
+            document.getElementById('evening-shuttle-btn').classList.remove('active');
+        });
+        document.getElementById('evening-shuttle-btn').addEventListener('click', () => {
+            displayShuttleDetails('evening');
+            document.getElementById('evening-shuttle-btn').classList.add('active');
+            document.getElementById('afternoon-shuttle-btn').classList.remove('active');
+        });
+    </script>
+</body>
+</html>
