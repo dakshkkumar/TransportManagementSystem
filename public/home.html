@@ -25,7 +25,7 @@
                 <h3>Route Details</h3>
                 <p><strong>Route No:</strong> <span id="route-no"></span></p>
                 <p><strong>Driver Name:</strong> <span id="driver-name"></span> <button id="driver-details-btn" class="btn-details">Details</button></p>
-                <p><strong>Bus No:</strong> <span id="bus-no"></span></p>
+                <p><strong>Bus Reg. No:</strong> <span id="bus-no"></span></p>
                 <button id="show-users-btn" class="btn">All users in your bus</button>
             </div>
             <div id="hosteler-route-access-container">
@@ -52,7 +52,6 @@
             <h3 id="modal-driver-name"></h3>
             <p><strong>Mobile:</strong> <span id="modal-driver-mobile"></span></p>
             <p><strong>License ID:</strong> <span id="modal-driver-license"></span></p>
-            <p><strong>Attribute:</strong> <span id="modal-driver-attribute"></span></p>
         </div>
     </div>
 
@@ -74,6 +73,51 @@
             <h3>Your Approved Route Ticket</h3>
             <div id="approval-details-content"></div>
             <img id="approval-qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=placeholder" alt="QR Code">
+        </div>
+    </div>
+
+    <!-- The Complaint Modal -->
+    <!-- The Complaint Modal -->
+    <div id="complaint-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>Lodge a Complaint</h3>
+            <form id="complaint-form">
+                <div class="input-group">
+                    <label for="complaint-type">Complaint Type:</label>
+                    <select id="complaint-type" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="1">Bus Delay</option>
+                        <option value="2">Driver Behavior</option>
+                        <option value="3">Route Issue</option>
+                        <option value="4">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="complaint-description">Description:</label>
+                    <textarea id="complaint-description" rows="5" required></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="complaint-reference-id">Reference ID (Optional)</label>
+                    <input type="text" id="complaint-reference-id" placeholder="e.g., Bus ID, Driver ID, Route No.">
+                </div>
+                <button type="submit" class="btn">Submit Complaint</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Complaint Section -->
+    <div class="complaint-section-container">
+        <div id="my-complaints-container" class="home-box">
+            <h3>My Complaints</h3>
+            <div id="my-complaints-list">
+                <!-- Student's complaints will be loaded here -->
+            </div>
+        </div>
+        <div class="lodge-complaint-box home-box">
+            <h3>Have an issue?</h3>
+            <p>Let us know by lodging a complaint.</p>
+            <button id="lodge-complaint-btn" class="btn">Lodge a Complaint</button>
         </div>
     </div>
 
@@ -111,6 +155,7 @@
 
             // Initialize shuttle booking UI for everyone
             initializeShuttleUI();
+            fetchMyComplaints(); // Fetch and display student's complaints
             setupModalCloseButtons();
         });
 
@@ -168,7 +213,7 @@
             container.innerHTML = `
                 <h3>Route Access Approved</h3>
                 <p><strong>Route:</strong> ${status.Route_no} - ${status.Route_name}</p>
-                <p><strong>Bus No:</strong> ${status.Bus_id}</p>
+                <p><strong>Bus Reg. No:</strong> ${status.bus_no} (ID: ${status.Bus_id})</p>
                 <p><strong>Driver:</strong> ${status.driver_name} <button class="btn-details" onclick="openDriverModal(${status.Driver_id})">Details</button></p>
                 <button class="btn" onclick='viewApprovalTicket(${JSON.stringify(status)})'>View Ticket</button>
             `;
@@ -200,7 +245,7 @@
             detailsContent.innerHTML = `
                 <p><strong>Student:</strong> ${name} (${rollNo})</p>
                 <p><strong>Route:</strong> ${status.Route_no} - ${status.Route_name}</p>
-                <p><strong>Bus No:</strong> ${status.Bus_id}</p>
+                <p><strong>Bus Reg. No:</strong> ${status.bus_no} (ID: ${status.Bus_id})</p>
                 <p><strong>Status:</strong> Approved</p>
                 <p><strong>Approved By:</strong> ${status.approved_by_name} (ID: ${status.Approved_by})</p>
             `;
@@ -248,7 +293,7 @@
             shuttleDetailsContainer.innerHTML = `
                 <p><strong>Date:</strong> ${formatDisplayDate(today)}</p>
                 <p><strong>Departure Time:</strong> ${formatDisplayTime(shuttle.departure_time)}</p>
-                <p><strong>Bus ID:</strong> ${shuttle.Bus_id}</p>
+                <p><strong>Bus Reg. No:</strong> ${shuttle.bus_no} (ID: ${shuttle.Bus_id})</p>
                 <p><strong>Capacity:</strong> ${shuttle.Capacity}</p>
                 <p><strong>Driver Name:</strong> ${shuttle.driver_name} <button class="btn-details" onclick="openDriverModal(${shuttle.Driver_id})">Details</button></p>
                 <div id="action-container">${actionButtonHtml}</div>
@@ -277,9 +322,10 @@
             const reviewModal = document.getElementById('booking-review-modal');
             const detailsContent = document.getElementById('booking-details-content');
             const qrImg = document.getElementById('qr-code-img');
+            const shuttleForBooking = shuttles.find(s => s.Type === booking.type);
             detailsContent.innerHTML = `
                 <p><strong>Shuttle Type:</strong> ${booking.type}</p>
-                <p><strong>Bus ID:</strong> ${booking.Bus_id}</p>
+                <p><strong>Bus Reg. No:</strong> ${shuttleForBooking ? shuttleForBooking.bus_no : 'N/A'} (ID: ${booking.Bus_id})</p>
                 <p><strong>Departure:</strong> ${formatDisplayDate(booking.booking_date)} at ${formatDisplayTime(booking.shuttle_time)}</p>
                 <p><strong>Status:</strong> Booked</p>
             `;
@@ -365,9 +411,80 @@
                 document.getElementById("modal-driver-name").textContent = driver.Name;
                 document.getElementById("modal-driver-mobile").textContent = driver.Mobile;
                 document.getElementById("modal-driver-license").textContent = driver.License_id;
-                document.getElementById("modal-driver-attribute").textContent = driver.Attribute;
                 document.getElementById("driver-modal").style.display = "block";
             }).catch(error => console.error('Error fetching driver details:', error));
+        }
+
+        // --- COMPLAINT SYSTEM ---
+        document.getElementById('lodge-complaint-btn').addEventListener('click', () => {
+            document.getElementById('complaint-modal').style.display = 'block';
+        });
+
+        document.getElementById('complaint-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const complaintTypeSelect = document.getElementById('complaint-type');
+            const typeId = complaintTypeSelect.value;
+            const type = complaintTypeSelect.options[complaintTypeSelect.selectedIndex].text;
+            const description = document.getElementById('complaint-description').value;
+            const referenceId = document.getElementById('complaint-reference-id').value;
+
+            if (!typeId || !type || !description) {
+                alert('Please fill in all complaint fields.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/complaints', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rollNo, typeId, type, description, referenceId }),
+                });
+
+                if (response.ok) {
+                    alert('Complaint submitted successfully!');
+                    document.getElementById('complaint-modal').style.display = 'none';
+                    document.getElementById('complaint-form').reset();
+                    fetchMyComplaints(); // Refresh complaints list
+                } else {
+                    alert(`Failed to submit complaint: ${await response.text()}`);
+                }
+            } catch (error) {
+                console.error('Error submitting complaint:', error);
+                alert('An error occurred while submitting your complaint.');
+            }
+        });
+
+        async function fetchMyComplaints() {
+            try {
+                const response = await fetch(`/api/my-complaints/${rollNo}`);
+                if (response.ok) {
+                    const complaints = await response.json();
+                    const container = document.getElementById('my-complaints-list');
+                    const myComplaintsContainer = document.getElementById('my-complaints-container');
+                    container.innerHTML = ''; // Clear previous complaints
+
+                    if (complaints.length > 0) {
+                        myComplaintsContainer.style.display = 'block';
+                        complaints.forEach(complaint => {
+                            const complaintDiv = document.createElement('div');
+                            complaintDiv.classList.add('complaint-item');
+                            complaintDiv.innerHTML = `
+                                <p><strong>Type:</strong> ${complaint.Type}</p>
+                                <p><strong>Description:</strong> ${complaint.Description}</p>
+                                <p><strong>Date:</strong> ${formatDisplayDate(complaint.Date)}</p>
+                                <p><strong>Status:</strong> <span class="status-${complaint.Status.toLowerCase()}">${complaint.Status}</span></p>
+                            `;
+                            container.appendChild(complaintDiv);
+                        });
+                    } else {
+                        myComplaintsContainer.style.display = 'none'; // Hide if no complaints
+                    }
+                } else {
+                    console.error('Failed to fetch my complaints:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error fetching my complaints:', error);
+            }
         }
         
         // Shuttle type toggle

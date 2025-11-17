@@ -364,3 +364,267 @@ body {
     padding: 12px;
     font-size: 16px;
 }
+
+/* --- Complaint Section --- */
+.complaint-section-container {
+    display: flex;
+    gap: 20px;
+    padding: 0 40px 40px 40px;
+    align-items: stretch;
+}
+
+.complaint-section-container .home-box {
+    margin-bottom: 0;
+}
+
+#my-complaints-container {
+    flex: 2; /* Takes up 2/3 of the space */
+}
+
+.lodge-complaint-box {
+    flex: 1; /* Takes up 1/3 of the space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#my-complaints-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px; /* For scrollbar spacing */
+}
+
+.complaint-item {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.complaint-item p {
+    margin: 0 0 8px 0;
+}
+
+.complaint-item p:last-child {
+    margin-bottom: 0;
+}
+
+.complaint-item .status-pending {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.complaint-item .status-resolved {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.complaint-item .status-in-progress {
+    color: #17a2b8;
+    font-weight: bold;
+}
+
+/* --- Complaint Modal Aesthetics --- */
+#complaint-modal .modal-content {
+    padding: 30px;
+}
+
+#complaint-modal h3 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+#complaint-form .input-group {
+    margin-bottom: 25px;
+}
+
+#complaint-form label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+#complaint-form select,
+#complaint-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+    font-size: 16px;
+    margin-top: 5px;
+    transition: border-color 0.3s ease;
+}
+
+#complaint-form select:focus,
+#complaint-form textarea:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Apply custom dropdown arrow from #route-select */
+#complaint-form select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 15px top 50%;
+    background-size: .65em auto;
+}
+
+#complaint-form textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+#complaint-form .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+/* --- Staff Complaint Management Aesthetics --- */
+.complaint-management-section {
+    padding: 0 40px 40px 40px;
+}
+
+.complaint-management-section .home-box {
+    flex-basis: 100%; /* Make it full width */
+}
+
+.complaint-management-section .complaint-list {
+    list-style: none;
+    padding: 0;
+}
+
+.complaint-management-section .complaint-item {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.complaint-management-section .complaint-item .details {
+    flex-grow: 1;
+}
+
+.complaint-management-section .complaint-item p {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+}
+
+.complaint-management-section .complaint-item p strong {
+    color: #333;
+    min-width: 100px;
+    display: inline-block;
+}
+
+.complaint-management-section .complaint-item .actions {
+    flex-shrink: 0;
+}
+
+.complaint-management-section .complaint-item .actions select {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* --- Old SPOC Modal CSS Removed --- */
+
+/* --- SPOC Finder Section Aesthetics --- */
+.spoc-finder-section {
+    padding: 0 40px 40px 40px;
+}
+
+.spoc-finder-section .home-box {
+    text-align: center; /* Center the content of the top box */
+}
+
+.spoc-finder-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.spoc-finder-form {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.spoc-finder-form input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    min-width: 200px;
+}
+
+.spoc-finder-divider {
+    font-size: 14px;
+    color: #888;
+    font-weight: bold;
+}
+
+#spoc-results-container {
+    margin-top: 20px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.spoc-results-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.spoc-result-item {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-left: 5px solid #007bff; /* Add a color accent */
+    border-radius: 8px;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.spoc-result-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.spoc-result-item p {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.spoc-result-item p:last-child {
+    margin-bottom: 0;
+}
+
+.spoc-result-item p strong {
+    color: #333;
+    min-width: 80px;
+    display: inline-block;
+}

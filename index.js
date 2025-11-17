@@ -34,7 +34,7 @@ app.post("/login", (req, res) => {
 
     // First, try to log in as a student
     db.query(
-        "SELECT s.Name, s.Roll_no, s.Route_no, d.Name AS driver_name, d.Driver_id, b.Bus_id AS bus_no " +
+        "SELECT s.Name, s.Roll_no, s.Route_no, d.Name AS driver_name, d.Driver_id, b.Bus_id AS bus_id, b.bus_no " +
         "FROM student s " +
         "LEFT JOIN route r ON s.route_no = r.Route_no " +
         "LEFT JOIN bus b ON r.Bus_id = b.Bus_id " +
@@ -85,7 +85,7 @@ app.post("/login", (req, res) => {
 app.get("/api/shuttle-details", (req, res) => {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     db.query(
-        "SELECT s.Bus_id, b.Capacity, d.Name AS driver_name, d.Driver_id, s.Time AS departure_time, s.Type, " +
+        "SELECT s.Bus_id, b.bus_no, b.Capacity, d.Name AS driver_name, d.Driver_id, s.Time AS departure_time, s.Type, " +
         "(SELECT COUNT(*) FROM shuttle_booking sb WHERE sb.type = s.Type AND sb.booking_date = ? AND sb.status = 'booked') AS currentBookings " +
         "FROM shuttle s " +
         "JOIN bus b ON s.Bus_id = b.Bus_id " +
@@ -108,7 +108,7 @@ app.get("/api/driver-details/:driverId", (req, res) => {
         return res.status(400).send("Driver ID is required.");
     }
 
-    db.query("SELECT * FROM driver WHERE Driver_id = ?", [driverId], (err, results) => {
+    db.query("SELECT Driver_id, Name, Mobile, License_id FROM driver WHERE Driver_id = ?", [driverId], (err, results) => {
         if (err) {
             return res.status(500).send("Internal server error.");
         }
@@ -235,6 +235,36 @@ app.post("/api/shuttle/cancel", (req, res) => {
     );
 });
 
+// API endpoint for students to submit a complaint
+app.post("/api/complaints", (req, res) => {
+    const { rollNo, typeId, type, description, referenceId } = req.body;
+    if (!rollNo || !typeId || !type || !description) {
+        return res.status(400).send("Missing required complaint information.");
+    }
+
+    const rollNoInt = parseInt(rollNo, 10);
+    const typeIdInt = parseInt(typeId, 10);
+    // referenceId can be optional, so we parse it if it exists, otherwise null
+    const referenceIdInt = referenceId ? parseInt(referenceId, 10) : null;
+
+    if (isNaN(rollNoInt) || isNaN(typeIdInt) || (referenceId && isNaN(referenceIdInt))) {
+        return res.status(400).send("Invalid Roll No, Complaint Type ID, or Reference ID.");
+    }
+
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    db.query(
+        "INSERT INTO complaint (Roll_no, Type_id, Type, Description, Date, Status, Reference_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [rollNoInt, typeIdInt, type, description, today, 'in-progress', referenceIdInt],
+        (err, results) => {
+            if (err) {
+                console.error("Error submitting complaint:", err);
+                return res.status(500).send("Error submitting complaint.");
+            }
+            res.status(201).send("Complaint submitted successfully.");
+        }
+    );
+});
+
 // --- Route Approval Endpoints ---
 
 // GET all routes for the dropdown
@@ -251,7 +281,7 @@ app.get("/api/routes", (req, res) => {
 app.get("/api/approval/status/:rollNo", (req, res) => {
     const { rollNo } = req.params;
     db.query(
-        "SELECT a.Route_no, a.status, a.Approved_by, st.Name as approved_by_name, r.Route_name, r.Bus_id, d.Name as driver_name, d.Driver_id " +
+        "SELECT a.Route_no, a.status, a.Approved_by, st.Name as approved_by_name, r.Route_name, r.Bus_id, b.bus_no, d.Name as driver_name, d.Driver_id " +
         "FROM approval a " +
         "JOIN route r ON a.Route_no = r.Route_no " +
         "LEFT JOIN bus b ON r.Bus_id = b.Bus_id " +
@@ -335,6 +365,110 @@ app.post("/api/approvals/approve", (req, res) => {
                 return res.status(404).send("Approval request not found or already actioned.");
             }
             res.status(200).send("Request approved successfully.");
+        }
+    );
+});
+
+// API endpoint for staff to view all complaints
+app.get("/api/complaints", (req, res) => {
+    db.query(
+        "SELECT c.Complaint_id, c.Roll_no, s.Name as student_name, c.Type_id, c.Type, c.Description, c.Date, c.Status, c.Reference_id " +
+        "FROM complaint c JOIN student s ON c.Roll_no = s.Roll_no WHERE c.Status != 'resolved' ORDER BY c.Date DESC",
+        (err, results) => {
+            if (err) {
+                console.error("Error fetching complaints:", err);
+                return res.status(500).send("Error fetching complaints.");
+            }
+            res.json(results);
+        }
+    );
+});
+
+// API endpoint to get details of all SPOCs
+app.get("/api/spocs", (req, res) => {
+    db.query(
+        "SELECT sp.Roll_no, st.Name AS student_name, st.Mobile, st.Email, sp.Route_no, r.Route_name " +
+        "FROM spoc sp " +
+        "JOIN student st ON sp.Roll_no = st.Roll_no " +
+        "JOIN route r ON sp.Route_no = r.Route_no " +
+        "ORDER BY sp.Route_no, st.Name",
+        (err, results) => {
+            if (err) {
+                console.error("Error fetching SPOC details:", err);
+                return res.status(500).send("Error fetching SPOC details.");
+            }
+            res.json(results);
+        }
+    );
+});
+
+// API endpoint to get SPOC for a specific route
+app.get("/api/spocs/:routeNo", (req, res) => {
+    const { routeNo } = req.params;
+    const routeNoInt = parseInt(routeNo, 10);
+
+    if (isNaN(routeNoInt)) {
+        return res.status(400).send("Invalid Route Number.");
+    }
+
+    db.query(
+        "SELECT sp.Roll_no, st.Name AS student_name, st.Mobile, st.Email, sp.Route_no, r.Route_name " +
+        "FROM spoc sp " +
+        "JOIN student st ON sp.Roll_no = st.Roll_no " +
+        "JOIN route r ON sp.Route_no = r.Route_no " +
+        "WHERE sp.Route_no = ?",
+        [routeNoInt],
+        (err, results) => {
+            if (err) {
+                console.error("Error fetching SPOC for route:", err);
+                return res.status(500).send("Error fetching SPOC for route.");
+            }
+            res.json(results);
+        }
+    );
+});
+
+// API endpoint for staff to update complaint status
+app.put("/api/complaints/:complaintId", (req, res) => {
+    const { complaintId } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).send("Complaint status is required.");
+    }
+
+    db.query(
+        "UPDATE complaint SET Status = ? WHERE Complaint_id = ?",
+        [status, complaintId],
+        (err, results) => {
+            if (err) {
+                console.error("Error updating complaint status:", err);
+                return res.status(500).send("Error updating complaint status.");
+            }
+            if (results.affectedRows === 0) {
+                return res.status(404).send("Complaint not found.");
+            }
+            res.status(200).send("Complaint status updated successfully.");
+        }
+    );
+});
+
+// API endpoint to get a student's complaints
+app.get("/api/my-complaints/:rollNo", (req, res) => {
+    const { rollNo } = req.params;
+    if (!rollNo) {
+        return res.status(400).send("Roll number is required.");
+    }
+
+    db.query(
+        "SELECT Complaint_id, Type, Description, Date, Status FROM complaint WHERE Roll_no = ? ORDER BY Date DESC",
+        [rollNo],
+        (err, results) => {
+            if (err) {
+                console.error("Error fetching student complaints:", err);
+                return res.status(500).send("Error fetching student complaints.");
+            }
+            res.json(results);
         }
     );
 });
